@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AxTarget | 4 Deneme</title>
+    <style>
+        :root {
+            --bg: #0b0f19; --card: #151b2b; --border: #2a3348;
+            --primary: #00f2fe; --accent: #ff0055; --success: #10b981;
+            --text: #e2e8f0; --text-dim: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.5rem 1rem; overflow-x: hidden; }
+        
+        .bg-grid { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(rgba(0,242,254,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,242,254,0.04) 1px, transparent 1px); background-size: 50px 50px; }
+        .bg-effects { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .shape { position: absolute; border: 1px solid rgba(0,242,254,0.12); opacity: 0.4; animation: floatShape 18s infinite ease-in-out; }
+        .shape-1 { width: 140px; height: 140px; top: 10%; left: 8%; border-radius: 20px; --rot: 15deg; }
+        .shape-2 { width: 90px; height: 90px; top: 65%; right: 12%; border-radius: 50%; border-color: rgba(255,0,85,0.15); }
+        .shape-3 { width: 160px; height: 160px; bottom: 15%; left: 5%; background: linear-gradient(135deg, rgba(0,242,254,0.08), transparent); clip-path: polygon(50% 0%, 100% 100%, 0% 100%); border: none; }
+        .shape-4 { width: 60px; height: 60px; top: 30%; right: 25%; border-radius: 10px; --rot: 45deg; border-color: rgba(16,185,129,0.15); }
+        .glow-orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.25; animation: pulseOrb 10s infinite ease-in-out; }
+        .glow-1 { width: 350px; height: 350px; background: radial-gradient(circle, var(--primary), transparent); top: -80px; left: 25%; }
+        .glow-2 { width: 280px; height: 280px; background: radial-gradient(circle, var(--accent), transparent); bottom: -60px; right: 15%; animation-delay: 5s; }
+
+        @keyframes floatShape { 0%,100% { transform: translateY(0) rotate(var(--rot,0deg)); opacity: 0.4; } 50% { transform: translateY(-40px) rotate(calc(var(--rot,0deg) + 15deg)); opacity: 0.7; } }
+        @keyframes pulseOrb { 0%,100% { transform: scale(1); opacity: 0.2; } 50% { transform: scale(1.3); opacity: 0.35; } }
+
+        .signature { position: fixed; right: 25px; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; text-orientation: mixed; font-family: 'Courier New', monospace; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.12); letter-spacing: 3px; z-index: 5; user-select: none; pointer-events: none; text-shadow: 0 0 12px rgba(0,242,254,0.3); transition: all 0.3s; }
+        .signature:hover { color: rgba(0,242,254,0.5); text-shadow: 0 0 18px rgba(0,242,254,0.7); }
+
+        .header { text-align: center; margin-bottom: 1.5rem; position: relative; z-index: 10; }
+        .header h1 { font-size: 2rem; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.3rem; }
+        .stats { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .stat { background: var(--card); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat span { display: block; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; }
+        .stat strong { font-size: 1.1rem; color: var(--primary); }
+
+        .game-container { position: relative; z-index: 10; width: 100%; max-width: 420px; background: var(--card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        
+        .target-display { display: flex; justify-content: center; gap: 0.8rem; margin: 1.5rem 0; }
+        .digit-box { width: 65px; height: 80px; background: #1e293b; border: 2px solid #334155; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .digit-box.hidden { color: var(--accent); border-color: var(--accent); animation: pulseQ 2s infinite; }
+        .digit-box.revealed { color: var(--primary); border-color: var(--primary); }
+        .digit-box.correct-pos { background: rgba(16,185,129,0.25); border-color: #10b981; color: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.5); }
+        .digit-box.wrong-pos { background: rgba(239,68,68,0.2); border-color: #ef4444; color: #ef4444; box-shadow: 0 0 15px rgba(239,68,68,0.4); animation: boxShake 0.4s ease; }
+        @keyframes pulseQ { 0%,100% { box-shadow: 0 0 5px rgba(255,0,85,0.3); } 50% { box-shadow: 0 0 15px rgba(255,0,85,0.5); } }
+        @keyframes boxShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-2px); } }
+
+        .attempts-wrap { margin-bottom: 1rem; }
+        .attempts-info { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text-dim); }
+        .attempts-bar { height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+        .attempts-fill { height: 100%; width: 100%; background: var(--success); transition: all 0.3s ease; }
+        .attempts-fill.mid { background: #f59e0b; }
+        .attempts-fill.low { background: var(--accent); }
+
+        .input-display { background: #0f172a; border: 2px solid #334155; border-radius: 10px; padding: 1rem; text-align: center; font-size: 1.8rem; letter-spacing: 0.7rem; margin-bottom: 1rem; color: var(--primary); font-weight: bold; }
+        
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
+        .btn { padding: 1rem; background: #1e293b; border: 1px solid #334155; color: white; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: all 0.15s; user-select: none; }
+        .btn:hover { background: #2d3748; border-color: var(--primary); }
+        .btn:active { transform: scale(0.95); }
+        .btn.del { background: #331111; border-color: #ef4444; color: #ef4444; }
+        .btn.submit { grid-column: span 3; background: linear-gradient(135deg, var(--primary), #0077ff); border: none; font-weight: bold; font-size: 1rem; margin-top: 0.5rem; box-shadow: 0 4px 15px rgba(0,242,254,0.2); }
+        .btn.submit:hover { box-shadow: 0 6px 20px rgba(0,242,254,0.35); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .feedback { text-align: center; min-height: 1.5rem; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .feedback.success { color: var(--success); }
+        .feedback.error { color: #ef4444; }
+        .hint-row { display: flex; justify-content: center; gap: 0.8rem; margin-top: 0.5rem; }
+        .hint-cell { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 6px; font-size: 1.1rem; }
+
+        .controls { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+        .ctrl { padding: 0.6rem 1rem; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 8px; cursor: pointer; }
+        .ctrl:hover { background: #2d3748; border-color: var(--primary); }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
+        .overlay.show { display: flex; }
+        .modal { background: var(--card); padding: 2rem; border-radius: 16px; text-align: center; max-width: 320px; width: 90%; border: 1px solid var(--border); animation: pop 0.3s ease; }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { margin-bottom: 0.5rem; font-size: 1.5rem; }
+        .modal p { color: var(--text-dim); margin-bottom: 1rem; }
+        .modal button { padding: 0.8rem 2rem; background: var(--primary); border: none; border-radius: 8px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .modal button:hover { opacity: 0.9; }
+
+        @media (max-width: 900px) { .signature { display: none; } }
+        @media (max-width: 480px) {
+            .digit-box { width: 55px; height: 70px; font-size: 1.6rem; }
+            .input-display { font-size: 1.5rem; padding: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-effects">
+        <div class="shape shape-1"></div><div class="shape shape-2"></div><div class="shape shape-3"></div><div class="shape shape-4"></div>
+        <div class="glow-orb glow-1"></div><div class="glow-orb glow-2"></div>
+    </div>
+    <div class="signature">ömer said çanga</div>
+
+    <div class="header">
+        <h1>AxTarget</h1>
+        <div class="stats">
+            <div class="stat"><span>Skor</span><strong id="score">0</strong></div>
+            <div class="stat"><span>Round</span><strong id="round">1</strong></div>
+            <div class="stat"><span>Hak</span><strong id="attCount">4</strong></div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="target-display" id="targetDisplay"></div>
+        <div class="attempts-wrap">
+            <div class="attempts-info"><span>Kalan Tahmin</span><span id="attLabel">4 / 4</span></div>
+            <div class="attempts-bar"><div class="attempts-fill" id="attBar"></div></div>
+        </div>
+        <div class="input-display" id="inputDisplay">_ _ _ _</div>
+        <div class="numpad" id="numpad">
+            <button class="btn" onclick="add(1)">1</button><button class="btn" onclick="add(2)">2</button><button class="btn" onclick="add(3)">3</button>
+            <button class="btn" onclick="add(4)">4</button><button class="btn" onclick="add(5)">5</button><button class="btn" onclick="add(6)">6</button>
+            <button class="btn" onclick="add(7)">7</button><button class="btn" onclick="add(8)">8</button><button class="btn" onclick="add(9)">9</button>
+            <button class="btn del" onclick="del()">⌫</button><button class="btn" onclick="add(0)">0</button><button class="btn submit" onclick="guess()">TAHMİN ET</button>
+        </div>
+        <div class="feedback" id="feedback">Gizli basamaklar ? ile gösteriliyor. Tahmin et!</div>
+        <div class="hint-row" id="hintRow"></div>
+        <div class="controls">
+            <button class="ctrl" onclick="newRound()">🔄 Yeni Round</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay">
+        <div class="modal">
+            <h2 id="modalTitle">Round Bitti!</h2>
+            <p id="modalSub">Cevap: 1234</p>
+            <button onclick="closeModal()">Devam Et ▶</button>
+        </div>
+    </div>
+
+    <script>
+        const state = { secret: '', hidden: [], current: '', attempts: 4, max: 4, round: 1, score: 0, active: true };
+        const ui = {
+            score: document.getElementById('score'), round: document.getElementById('round'), att: document.getElementById('attCount'),
+            label: document.getElementById('attLabel'), bar: document.getElementById('attBar'),
+            input: document.getElementById('inputDisplay'), fb: document.getElementById('feedback'), hints: document.getElementById('hintRow'),
+            target: document.getElementById('targetDisplay'), overlay: document.getElementById('overlay'),
+            mTitle: document.getElementById('modalTitle'), mSub: document.getElementById('modalSub'),
+            btns: document.querySelectorAll('.numpad .btn')
+        };
+
+        function init() { newRound(); setupKeyboard(); }
+        function newRound() {
+            state.secret = String(Math.floor(1000 + Math.random() * 9000));
+            state.hidden = [0,1,2,3].sort(()=>Math.random()-0.5).slice(0,2).sort((a,b)=>a-b);
+            state.current = ''; state.attempts = state.max; state.active = true;
+            ui.hints.innerHTML = ''; ui.fb.textContent = 'Gizli basamaklar ? ile gösteriliyor. Tahmin et!';
+            ui.fb.className = 'feedback'; updateUI(); renderTarget(); toggleBtns(true);
+        }
+
+        function renderTarget() {
+            ui.target.innerHTML = '';
+            state.secret.split('').forEach((d, i) => {
+                const box = document.createElement('div');
+                box.className = `digit-box ${state.hidden.includes(i) ? 'hidden' : 'revealed'}`;
+                box.textContent = state.hidden.includes(i) ? '?' : d;
+                ui.target.appendChild(box);
+            });
+        }
+
+        // DÜZELTME: Yanlış tahminde gizli sayılar '?' olarak kalır
+        function colorTargetBoxes(guess, secret) {
+            const boxes = ui.target.children;
+            for (let i = 0; i < 4; i++) {
+                boxes[i].classList.remove('hidden', 'revealed', 'correct-pos', 'wrong-pos');
+                
+                if (guess[i] === secret[i]) {
+                    boxes[i].textContent = secret[i];
+                    boxes[i].classList.add('correct-pos');
+                } else {
+                    // Gizli olanlar '?' kalsın, zaten açık olanlar değişmesin
+                    boxes[i].textContent = state.hidden.includes(i) ? '?' : secret[i];
+                    boxes[i].classList.add('wrong-pos');
+                }
+            }
+        }
+
+        // Round sonunda tüm sayıları açar
+        function revealFinalSecret() {
+            const boxes = ui.target.children;
+            for (let i = 0; i < 4; i++) {
+                boxes[i].textContent = state.secret[i];
+                boxes[i].classList.remove('wrong-pos');
+                // Kazandıysa yeşil, kaybettiysa kırmızı border kalabilir
+            }
+        }
+
+        function add(n) { if (!state.active || state.current.length >= 4) return; state.current += n; renderInput(); }
+        function del() { if (!state.active) return; state.current = state.current.slice(0,-1); renderInput(); }
+        function renderInput() { ui.input.textContent = state.current.padEnd(4,'_').split('').join(' '); }
+        function toggleBtns(enabled) { ui.btns.forEach(b => b.disabled = !enabled); }
+
+        function guess() {
+            if (state.current.length !== 4 || !state.active) return;
+            state.active = false; toggleBtns(false);
+            state.attempts--; updateUI();
+
+            const isWin = state.current === state.secret;
+            showFeedback(state.current, state.secret);
+            colorTargetBoxes(state.current, state.secret);
+
+            if (isWin) {
+                const pts = 100 + ((state.attempts + 1) * 50);
+                state.score += pts; ui.score.textContent = state.score;
+                ui.fb.textContent = `🎉 Hepsi doğru! +${pts} puan`; ui.fb.className = 'feedback success';
+                setTimeout(() => { revealFinalSecret(); showModal(true, state.secret); }, 800);
+            } else if (state.attempts === 0) {
+                ui.fb.textContent = `💥 Haklar bitti!`; ui.fb.className = 'feedback error';
+                setTimeout(() => { revealFinalSecret(); showModal(false, state.secret); }, 800);
+            } else {
+                state.current = ''; renderInput();
+                setTimeout(() => { state.active = true; toggleBtns(true); }, 600);
+            }
+        }
+
+        function showFeedback(guess, secret) {
+            ui.hints.innerHTML = '';
+            guess.split('').forEach((g, i) => {
+                const cell = document.createElement('div'); cell.className = 'hint-cell';
+                if (g === secret[i]) cell.textContent = '✅';
+                else if (parseInt(g) > parseInt(secret[i])) cell.textContent = '🔽';
+                else cell.textContent = '🔼';
+                ui.hints.appendChild(cell);
+            });
+        }
+
+        function updateUI() {
+            ui.att.textContent = state.attempts; ui.label.textContent = `${state.attempts} / ${state.max}`;
+            ui.bar.style.width = `${(state.attempts / state.max) * 100}%`;
+            ui.bar.className = 'attempts-fill ' + (state.attempts > 2 ? '' : state.attempts > 1 ? 'mid' : 'low');
+        }
+
+        function showModal(win, answer) {
+            ui.mTitle.textContent = win ? '🎉 Tebrikler!' : '💥 Başarısız';
+            ui.mSub.textContent = `Doğru cevap: ${answer}`;
+            ui.overlay.classList.add('show');
+        }
+        function closeModal() { ui.overlay.classList.remove('show'); state.round++; ui.round.textContent = state.round; newRound(); }
+        function setupKeyboard() {
+            document.addEventListener('keydown', e => {
+                if (e.key >= '0' && e.key <= '9') add(parseInt(e.key));
+                else if (e.key === 'Backspace') del();
+                else if (e.key === 'Enter') guess();
+            });
+        }
+        init();
+    </script>
+</body>
+</html>
